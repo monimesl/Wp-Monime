@@ -1,0 +1,5 @@
+patch:validate
+patch:apply
+remove --no-plugins {{PATCHES-OWNER}} --no-update
+update --no-plugins
+@assert vaimo/composer-patches-target1,value8,valueC

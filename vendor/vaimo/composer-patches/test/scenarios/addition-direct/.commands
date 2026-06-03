@@ -1,0 +1,5 @@
+patch:validate
+>mv {{OWNER-ROOT}}/patches/1_second-change.patch {{OWNER-ROOT}}/patches/1_second-change.bak
+patch:apply
+>mv {{OWNER-ROOT}}/patches/1_second-change.bak {{OWNER-ROOT}}/patches/1_second-change.patch
+patch:apply

@@ -1,0 +1,11 @@
+{
+    "require": {
+        "vaimo/composer-patches": "^6.0"
+    },
+    "config": {
+		"platform-check": false,
+        "allow-plugins": {
+            "vaimo/composer-patches": true
+        }
+    }
+}

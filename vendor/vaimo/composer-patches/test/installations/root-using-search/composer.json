@@ -1,0 +1,36 @@
+{
+    "name": "vaimo/composer-patches-sandbox",
+    "type": "library",
+    "license": "MIT",
+    "description": "Sandbox module for testing out patch applier functionality (using root search)",
+    "require": {
+        "vaimo/composer-patches-local": "@dev",
+        "vaimo/composer-patches-target1": "1.0.0",
+        "vaimo/composer-patches-target2": "1.2.0",
+        "vaimo/composer-patches-target3": "1.2.3"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "modules/composer-patches"
+        },
+        {
+            "type": "path",
+            "url": "modules/composer-patches-target*",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
+    "extra": {
+        "patches-search": "patches"
+    },
+    "config": {
+        "process-timeout": 3000,
+        "allow-plugins": {
+            "__vaimo/*": true,
+            "vaimo/composer-patches-local": true,
+            "vaimo/composer-patches-proxy": true
+        }
+    }
+}

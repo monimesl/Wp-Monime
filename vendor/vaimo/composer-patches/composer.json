@@ -1,0 +1,132 @@
+{
+    "name": "vaimo/composer-patches",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "description": "Applies a patch from a local or remote file to any package that is part of a given composer project. Patches can be defined both on project and on package level. Optional support for patch versioning, sequencing, custom patch applier configuration and patch command for testing/troubleshooting added patches.",
+    "require": {
+        "php": ">=7.1.0",
+        "ext-json": "*",
+        "composer-plugin-api": "^2.0",
+        "composer-runtime-api": "^2.0",
+        "loophp/phposinfo": "^1.6 || ^1.7",
+        "seld/jsonlint": "^1.7.1",
+        "symfony/console": "^4.0 || ^5.0 || ^6.0 || ^7.0 || ^8.0",
+        "vaimo/topological-sort": "^1.0 || ^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.0",
+        "vaimo/composer-patches-proxy": "1.0.0",
+        "phpcompatibility/php-compatibility": ">=9.1.1",
+        "squizlabs/php_codesniffer": ">=2.9.2",
+        "phpmd/phpmd": ">=2.6.0",
+        "vaimo/composer-changelogs": "^1.0 || ^2.0"
+    },
+    "conflict": {
+        "cweagans/composer-patches": "*"
+    },
+    "config": {
+        "platform": {
+            "php": "8.5.2"
+        },
+        "process-timeout": 3000,
+        "allow-plugins": {
+            "vaimo/composer-patches-proxy": true,
+            "vaimo/composer-changelogs": true
+        }
+    },
+    "authors": [
+        {
+            "name": "Allan Paiste",
+            "email": "allan.paiste@vaimo.com"
+        }
+    ],
+    "support": {
+        "source": "https://github.com/vaimo/composer-patches",
+        "docs": "https://github.com/vaimo/composer-patches",
+        "issues": "https://github.com/vaimo/composer-patches/issues"
+    },
+    "keywords": [
+        "composer plugin",
+        "os-specific config",
+        "configurable patch applier",
+        "patching",
+        "patcher",
+        "version restriction",
+        "indirect restrictions",
+        "patch description",
+        "remote patch files",
+        "downloaded patches",
+        "package bug-fix",
+        "package patches",
+        "patch exclusion",
+        "development patches",
+        "hot-fixes",
+        "hotfixes",
+        "fixes",
+        "back-ports",
+        "backports",
+        "environment flags",
+        "skipped packages",
+        "patch skipping",
+        "maintenance tools",
+        "maintenance",
+        "tools",
+        "multiple formats",
+        "patch branching",
+        "multi-version patches",
+        "bundled patches",
+        "bulk patches",
+        "patch command",
+        "composer command",
+        "utilities",
+        "utils",
+        "utility",
+        "plugin",
+        "patch header",
+        "patch meta-data",
+        "resolve patches",
+        "patch search",
+        "patch resolve"
+    ],
+    "minimum-stability": "stable",
+    "extra": {
+        "class": "Vaimo\\ComposerPatches\\Plugin",
+        "changelog": {
+            "source": "changelog.json",
+            "output": {
+                "md": "CHANGELOG.md"
+            }
+        }
+    },
+    "scripts-descriptions": {
+        "test": "Run tests",
+        "code:test": "Run tests",
+        "code:test!": "Run tests (and purge dependency locks before doing so)",
+        "code:lint": "Run static code analysis for the source code",
+        "code:fix": "Apply automatic fixes to the code based on the static code analysis (where applicable)",
+        "code:deps": "Make sure that dependencies have code that will actually work with platform requirements defined"
+    },
+    "scripts": {
+        "test": "bin/test",
+        "code:test": "bin/test",
+        "code:test!": "PURGE=1 bin/test",
+        "code:lint": "bin/analyse",
+        "code:deps": "bin/analyse-dependencies",
+        "code:fix": "bin/normalise",
+        "ci:build": "composer code:lint && composer code:deps && composer code:test!",
+        "pre-install-cmd": "bin/bootstrap-test-env",
+        "post-install-cmd": "bin/bootstrap",
+        "post-update-cmd": "bin/bootstrap"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vaimo\\ComposerPatches\\": "src"
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "modules/proxy-plugin"
+        }
+    ]
+}

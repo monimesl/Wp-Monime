@@ -1,0 +1,5 @@
+patch:validate
+
+patch:apply
+
+> test "$(cat composer.lock|grep '\"patches_applied\"')" == "" # Scanning lock contents #

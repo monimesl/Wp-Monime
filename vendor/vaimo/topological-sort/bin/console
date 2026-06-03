@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Copyright © Marc J. Schmidt. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+include __DIR__ . '/../vendor/autoload.php';
+
+use Vaimo\TopSort\Command\BenchmarkCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application();
+$application->add(new BenchmarkCommand);
+$application->run();

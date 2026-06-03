@@ -1,0 +1,53 @@
+{
+  "name": "vaimo/topological-sort",
+  "type": "library",
+  "description": "High-Performance TopSort/Dependency resolving algorithm (compatibility version to work with 7.0 - 7.2)",
+  "keywords": [
+    "topological sort",
+    "topsort",
+    "dependency resolving"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marc J. Schmidt",
+      "email": "marc@marcjschmidt.de"
+    }
+  ],
+  "require": {
+    "php": ">=7.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~6.0 || ~7.0 || ~8.0 || ~9.0",
+    "symfony/console": "~3.0 || ~4.0 || ~5.0",
+    "squizlabs/php_codesniffer": "^2.9.2 || ^3.13",
+    "phpcompatibility/php-compatibility": "^9"
+  },
+  "scripts-descriptions": {
+    "test": "Run tests",
+    "code:analyse": "Run static code analysis for the source code",
+    "code:normalise": "Apply automatic fixes to the code based on the static code analysis (where applicable)"
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "code:analyse": "bin/analyse",
+    "code:normalise": "bin/normalise",
+    "post-install-cmd": "bin/bootstrap",
+    "post-update-cmd" : "bin/bootstrap"
+  },
+  "autoload": {
+    "psr-4": {
+      "Vaimo\\TopSort\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Vaimo\\TopSort\\Tests\\": "tests/Tests/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+        "dev-master": "2.x-dev"
+    }
+  }
+}

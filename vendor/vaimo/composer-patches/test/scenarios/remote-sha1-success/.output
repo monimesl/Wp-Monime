@@ -1,0 +1,7 @@
+Processing patches configuration
+  - Installing vaimo/composer-patches-target1 (1.0.0): Mirroring from modules/composer-patches-target1
+  - Applying patches for vaimo/composer-patches-target1 (1)
+    ~ {{PATCHES-OWNER}}: https://raw.githubusercontent.com/vaimo/composer-patches/release/3/test/scenarios/remote-success/files/patches/single-package-single-file-no-version.patch [NEW]
+      Change: value8 => valueC
+
+Writing patch info to install file

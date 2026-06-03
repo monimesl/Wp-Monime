@@ -1,0 +1,23 @@
+patch:validate
+
+update --lock
+
+@assert_changes
+
+@queue_update vaimo/composer-patches-target2
+update --lock
+
+@assert_changes
+
+@queue_update vaimo/composer-patches-target1
+update --lock
+
+@assert_changes
+
+@queue_install vaimo/composer-patches-target2
+update --lock
+
+@assert_changes
+
+@queue_install vaimo/composer-patches-target1
+update --lock
