@@ -48,7 +48,7 @@ final class CreateMonimePayload
         string $currency = 'SLE',
         array $paymentOptions = [],
         array $metadata = [],
-        string $callbackState = '',
+        string $callbackState = ''
     ) {
         $this->items = $items;
         $this->idempotency_key = $idempotency_key;
