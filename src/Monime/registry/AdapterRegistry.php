@@ -2,7 +2,7 @@
 
 namespace Monime\registry;
 
-use Monime\contracts\PaymentAdapterInterface;
+use Monime\contracts\MonimePaymentAdapterInterface;
 
 /**
  * In-memory registry for Monime payment adapters.
@@ -12,31 +12,30 @@ use Monime\contracts\PaymentAdapterInterface;
  */
 class AdapterRegistry
 {
+    /** @var array<string, PaymentAdapterInterface> */
+    private static $adapters = [];
 
-	/** @var array<string, PaymentAdapterInterface> */
-	private static $adapters = [];
+    /**
+     * Retrieve a registered adapter by its ID.
+     */
+    public static function get(string $adapterId): ?MonimePaymentAdapterInterface
+    {
+        return self::$adapters[$adapterId] ?? null;
+    }
 
-	/**
-	 * Retrieve a registered adapter by its ID.
-	 */
-	public static function get(string $adapterId): ?PaymentAdapterInterface
-	{
-		return self::$adapters[$adapterId] ?? null;
-	}
+    /**
+     * Register an adapter using its own getAdapterId() value as the key.
+     */
+    public static function registerAdapter(MonimePaymentAdapterInterface $paymentAdapter): void
+    {
+        self::$adapters[$paymentAdapter->getAdapterId()] = $paymentAdapter;
+    }
 
-	/**
-	 * Register an adapter using its own getAdapterId() value as the key.
-	 */
-	public static function registerAdapter(PaymentAdapterInterface $paymentAdapter): void
-	{
-		self::$adapters[$paymentAdapter->getAdapterId()] = $paymentAdapter;
-	}
-
-	/**
-	 * Return all registered adapters.
-	 */
-	public static function getAll(): array
-	{
-		return self::$adapters;
-	}
+    /**
+     * Return all registered adapters.
+     */
+    public static function getAll(): array
+    {
+        return self::$adapters;
+    }
 }
