@@ -12,7 +12,7 @@ use Monime\contracts\MonimePaymentAdapterInterface;
  */
 class AdapterRegistry
 {
-    /** @var array<string, PaymentAdapterInterface> */
+    /** @var array<string, MonimePaymentAdapterInterface> */
     private static $adapters = [];
 
     /**
@@ -20,7 +20,13 @@ class AdapterRegistry
      */
     public static function get(string $adapterId): ?MonimePaymentAdapterInterface
     {
-        return self::$adapters[$adapterId] ?? null;
+        $adapter = self::$adapters[$adapterId] ?? null;
+
+        \Monime\core\monime_log('info', $adapter ? 'Adapter registry hit' : 'Adapter registry miss', [
+            'adapter_id' => $adapterId,
+        ]);
+
+        return $adapter;
     }
 
     /**
@@ -28,7 +34,15 @@ class AdapterRegistry
      */
     public static function registerAdapter(MonimePaymentAdapterInterface $paymentAdapter): void
     {
-        self::$adapters[$paymentAdapter->getAdapterId()] = $paymentAdapter;
+        $adapterId = $paymentAdapter->getAdapterId();
+        $overwritten = isset(self::$adapters[$adapterId]);
+
+        self::$adapters[$adapterId] = $paymentAdapter;
+
+        \Monime\core\monime_log('info', $overwritten ? 'Adapter overwritten' : 'Adapter registered', [
+            'adapter_id' => $adapterId,
+            'registered_count' => count(self::$adapters),
+        ]);
     }
 
     /**

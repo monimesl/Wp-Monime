@@ -22,9 +22,11 @@ class WcAdapter
 	 */
 	public static function boot(): void
 	{
+		\Monime\core\monime_log('info', 'WooCommerce adapter boot started');
 
 		add_action('monime_register_adapters', function () {
 
+			\Monime\core\monime_log('info', 'Registering WooCommerce Monime adapter');
 			AdapterRegistry::registerAdapter(
 				new WcMonimeGateway()
 			);
@@ -105,6 +107,10 @@ class WcAdapter
 				return;
 			}
 
+			\Monime\core\monime_log('info', 'WooCommerce callback redirect received', [
+				'callback' => sanitize_text_field((string) $_GET['monime_callback']),
+			]);
+
 			if (!isset($_GET['order_id']) || !isset($_GET['key'])) {
 				return;
 			}
@@ -119,6 +125,9 @@ class WcAdapter
 			}
 
 			if ($_GET['monime_callback'] === 'success') {
+				\Monime\core\monime_log('info', 'WooCommerce success callback processing', [
+					'order_id' => $order_id,
+				]);
 				// Payment successful - mark as complete if not already
 				if (!$order->is_paid() && $order->get_meta('_monime_payment_processed') !== 'yes') {
 					$order->payment_complete();
@@ -131,6 +140,9 @@ class WcAdapter
 				wp_redirect($order->get_checkout_order_received_url());
 				exit;
 			} elseif ($_GET['monime_callback'] === 'cancel') {
+				\Monime\core\monime_log('info', 'WooCommerce cancel callback processing', [
+					'order_id' => $order_id,
+				]);
 				// Payment cancelled
 				if (!$order->is_paid()) {
 					$order->update_status('cancelled', 'Payment cancelled by customer.');
@@ -159,6 +171,7 @@ class WcAdapter
 			$space_id = $env['monime_space_id'];
 
 			if (empty($api_token) || empty($space_id)) {
+				\Monime\core\monime_log('error', 'WooCommerce credentials missing for admin notice');
 ?>
 				<div class="notice notice-warning">
 					<p>

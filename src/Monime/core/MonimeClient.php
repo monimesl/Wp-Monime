@@ -44,7 +44,14 @@ class MonimeClient
      */
     public function create_checkout_session(CreateMonimePayload $paymentrequest, string $_handler)
     {
+        \Monime\core\monime_log('info', 'Monime checkout request starting', [
+            'handler' => $_handler,
+            'reference' => $paymentrequest->reference,
+            'line_items' => count($paymentrequest->items),
+        ]);
+
         if (empty($this->url['checkout_session_url'])) {
+            \Monime\core\monime_log('error', 'Checkout URL not configured');
             throw new \RuntimeException('Checkout URL not configured');
         }
 
@@ -104,10 +111,18 @@ class MonimeClient
 
         // Convert transport failures into exceptions so callers handle one path.
         if (is_wp_error($response)) {
+            \Monime\core\monime_log('error', 'Monime network error', [
+                'handler' => $_handler,
+                'message' => $response->get_error_message(),
+            ]);
             throw new \RuntimeException('Monime network error: ' . $response->get_error_message());
         }
         $status_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
+        \Monime\core\monime_log('info', 'Monime checkout response received', [
+            'handler' => $_handler,
+            'status_code' => $status_code,
+        ]);
 
         // Surface Monime API error messages when the HTTP status is not success.
         if ($status_code !== 200 && $status_code !== 201) {
@@ -115,12 +130,21 @@ class MonimeClient
             $msg = $error['message'] ?? $error['error'] ?? $error['details'] ?? "HTTP {$status_code}";
             if (is_array($msg))
                 $msg = json_encode($msg);
+            \Monime\core\monime_log('error', 'Monime API returned error response', [
+                'handler' => $_handler,
+                'status_code' => $status_code,
+                'message' => $msg,
+            ]);
             throw new \RuntimeException($msg, $status_code);
         }
 
         // Validate JSON before callers attempt to read the Monime result payload.
         $parsed = json_decode($body, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
+            \Monime\core\monime_log('error', 'Monime response JSON invalid', [
+                'handler' => $_handler,
+                'json_error' => json_last_error_msg(),
+            ]);
             throw new \RuntimeException('Invalid JSON: ' . json_last_error_msg());
         }
 
@@ -128,8 +152,16 @@ class MonimeClient
         $redirectUrl = $result['redirectUrl'] ?? null;
         // A checkout session is unusable without the hosted checkout URL.
         if (empty($redirectUrl)) {
+            \Monime\core\monime_log('error', 'Monime response missing redirect URL', [
+                'handler' => $_handler,
+            ]);
             throw new \RuntimeException('Invalid Redirect Url. Response: ' . json_encode($parsed));
         }
+
+        \Monime\core\monime_log('info', 'Monime checkout session created', [
+            'handler' => $_handler,
+            'has_redirect_url' => true,
+        ]);
 
         return $result;
     }

@@ -11,6 +11,7 @@ final class WC_Monime_Blocks_Support extends AbstractPaymentMethodType
 
 	public function initialize()
 	{
+		\Monime\core\monime_log('info', 'WooCommerce Blocks support initialized');
 		$this->settings = get_option('woocommerce_monime_settings', []);
 
 		if (class_exists('WcMonimeGateway')) {
@@ -24,6 +25,9 @@ final class WC_Monime_Blocks_Support extends AbstractPaymentMethodType
 		if (empty($this->settings)) $this->initialize();
 
 		$enabled = !empty($this->settings['enabled']) && 'yes' === $this->settings['enabled'];
+		\Monime\core\monime_log('info', 'WooCommerce Blocks active state evaluated', [
+			'enabled' => $enabled,
+		]);
 		return $enabled && ($this->gateway ? $this->gateway->is_available() : true);
 	}
 

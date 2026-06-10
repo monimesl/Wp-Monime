@@ -24,7 +24,7 @@ final class Env
 	 */
 	public static function get(): array
 	{
-		return [
+		$env = [
 			'monime_token'       => self::option('monime_token'),
 			'monime_space_id'    => self::option('monime_space_id'),
 			'financialAccountId' => self::option('monime_financial_account_id'),
@@ -33,6 +33,14 @@ final class Env
 			'cancel_url'         => self::option('cancel_url'),
 			'webhook_secret'     => self::option('webhook_secret'),
 		];
+
+		monime_log('info', 'Monime settings loaded', [
+			'has_token' => $env['monime_token'] !== '',
+			'has_space_id' => $env['monime_space_id'] !== '',
+			'has_webhook_secret' => $env['webhook_secret'] !== '',
+		]);
+
+		return $env;
 	}
 
 	/**
@@ -52,6 +60,10 @@ final class Env
 		 * Reject invalid types entirely.
 		 */
 		if (!is_scalar($value)) {
+			monime_log('error', 'Monime option had invalid type', [
+				'key' => $key,
+				'type' => gettype($value),
+			]);
 			return '';
 		}
 
@@ -72,6 +84,7 @@ final class Env
 	 */
 	public static function clear(): void
 	{
+		monime_log('info', 'Clearing Monime settings');
 		$keys = [
 			'monime_token',
 			'monime_space_id',
@@ -98,5 +111,7 @@ final class Env
 		if (function_exists('wp_cache_flush')) {
 			wp_cache_flush();
 		}
+
+		monime_log('info', 'Monime settings cleared');
 	}
 }

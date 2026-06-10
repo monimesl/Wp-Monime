@@ -14,6 +14,7 @@ use Monime\core\Env;
  */
 add_action('admin_init', function () {
 	$group = 'monime_settings_group';
+	\Monime\core\monime_log('info', 'Registering Monime settings');
 
 	// Each option maps to the sanitizer that fits the expected value type.
 	$fields = [
@@ -42,6 +43,10 @@ add_action('admin_init', function () {
 				$value = call_user_func($sanitize, $value);
 
 				$value = trim($value);
+				\Monime\core\monime_log('info', 'Monime setting sanitized', [
+					'key' => $key,
+					'action' => $value === '' ? 'cleared' : 'saved',
+				]);
 
 				if ($value === '') {
 					delete_option($key);

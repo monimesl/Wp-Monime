@@ -11,8 +11,12 @@ class AdapterService
 	/**
 	 * Fire the shared registration hook consumed by WooCommerce and GiveWP.
 	 */
-	public static function boot(): void
-	{
-		do_action('monime_register_adapters');
-	}
+    public static function boot(): void
+    {
+        \Monime\core\monime_log('info', 'AdapterService boot started');
+        do_action('monime_register_adapters');
+        \Monime\core\monime_log('info', 'AdapterService boot finished', [
+            'adapter_count' => count(\Monime\registry\AdapterRegistry::getAll()),
+        ]);
+    }
 }

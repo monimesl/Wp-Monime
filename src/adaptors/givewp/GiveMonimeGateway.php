@@ -54,6 +54,11 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
      */
     public function buildPaymentPayload(array $data): CreateMonimePayload
     {
+        \Monime\core\monime_log('info', 'GiveWP buildPaymentPayload called', [
+            'adapter_id' => $this->getAdapterId(),
+            'reference' => (string) ($data['reference'] ?? ''),
+        ]);
+
         $donation_id = isset($data['donation_id']) ? (int) $data['donation_id'] : 0;
 
         $success_url = $this->generateGatewayRouteUrl('handleCreatePaymentRedirect', [
@@ -96,11 +101,14 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
      */
     public function handleWebhook(array $payload): void
     {
-        //error_log('webhook works.............');
+        \Monime\core\monime_log('info', 'GiveWP webhook received', [
+            'adapter_id' => $this->getAdapterId(),
+        ]);
         $status = $payload['data']['status'] ?? null;
         $reference = $payload['data']['reference'] ?? null;
 
         if (!$status || !$reference) {
+            \Monime\core\monime_log('error', 'GiveWP webhook missing status or reference');
             return;
         }
 
@@ -114,6 +122,9 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
         ]);
 
         if (empty($payments)) {
+            \Monime\core\monime_log('error', 'GiveWP donation not found for webhook', [
+                'reference' => $reference,
+            ]);
             return;
         }
 
@@ -122,14 +133,23 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
         // 2. Map status
         switch ($status) {
             case 'completed':
+                \Monime\core\monime_log('info', 'GiveWP donation marked completed', [
+                    'payment_id' => $payment_id,
+                ]);
                 give_update_payment_status($payment_id, 'publish');
                 break;
 
             case 'cancelled':
+                \Monime\core\monime_log('info', 'GiveWP donation marked failed', [
+                    'payment_id' => $payment_id,
+                ]);
                 give_update_payment_status($payment_id, 'failed');
                 break;
 
             case 'expired':
+                \Monime\core\monime_log('info', 'GiveWP donation marked abandoned', [
+                    'payment_id' => $payment_id,
+                ]);
                 give_update_payment_status($payment_id, 'abandoned');
                 break;
 
@@ -738,6 +758,10 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
 
     public function createPayment(Donation $donation, $gatewayData)
     {
+        \Monime\core\monime_log('info', 'GiveWP payment creation started', [
+            'donation_id' => $donation->id,
+        ]);
+
         // Use a unique reference to link Monime webhooks back to this donation.
         $reference = 'monime_' . $donation->id . '_' . wp_generate_uuid4();
 
@@ -771,12 +795,20 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
         try {
             $response = PaymentService::create($this->getAdapterId(), $data);
         } catch (\Throwable $e) {
+            \Monime\core\monime_log('error', 'GiveWP payment creation failed', [
+                'donation_id' => $donation->id,
+                'message' => $e->getMessage(),
+            ]);
             throw new \Exception('Monime checkout initialization failed.');
         } // Store local identifiers before sending the donor offsite.
         $donation->gatewayTransactionId = $reference;
         $donation->save();
         update_post_meta($donation->id, '_monime_reference', $reference);
         update_post_meta($donation->id, '_monime_redirect_url', $response['redirectUrl']);
+        \Monime\core\monime_log('info', 'GiveWP payment creation finished', [
+            'donation_id' => $donation->id,
+            'reference' => $reference,
+        ]);
         return new RedirectOffsite($response['redirectUrl']);
     }
 
@@ -813,6 +845,7 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
          */
 
         if (empty($reference)) {
+            \Monime\core\monime_log('error', 'GiveWP redirect missing reference');
             return new RedirectResponse($failedUrl);
         }
 
@@ -829,6 +862,9 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
         ]);
 
         if (empty($payments)) {
+            \Monime\core\monime_log('error', 'GiveWP redirect donation not found', [
+                'reference' => $reference,
+            ]);
             return new RedirectResponse($failedUrl);
         }
 
@@ -843,6 +879,9 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
          */
 
         if ($status === 'x') {
+            \Monime\core\monime_log('info', 'GiveWP redirect cancelled', [
+                'payment_id' => $payment_id,
+            ]);
             // Never overwrite completed donations
             if ($current_status !== 'publish') {
                 //error_log('x.....not publish ==fail');
@@ -867,6 +906,9 @@ class GiveMonimeGateway extends PaymentGateway implements MonimePaymentAdapterIn
          */
 
         if ($current_status !== 'publish') {
+            \Monime\core\monime_log('info', 'GiveWP redirect completed', [
+                'payment_id' => $payment_id,
+            ]);
             //error_log('o..... publish ==success');
             give_update_payment_status($payment_id, 'publish', 'Donation completed via Monime redirect.');
 

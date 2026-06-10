@@ -32,6 +32,7 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function __construct()
     {
+        \Monime\core\monime_log('info', 'WooCommerce gateway constructed');
         $this->id = 'monime';
         $this->icon = plugins_url('./../../../assets/images/monime_icon.png', __FILE__);
         $this->has_fields = true;
@@ -106,6 +107,10 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function buildPaymentPayload(array $data): CreateMonimePayload
     {
+        \Monime\core\monime_log('info', 'WooCommerce buildPaymentPayload called', [
+            'adapter_id' => $this->getAdapterId(),
+            'reference' => (string) ($data['reference'] ?? ''),
+        ]);
         return new CreateMonimePayload(is_array($data['lineItems'] ?? null) ? $data['lineItems'] : [],
 
         (string) $data['idempotency_key'], (string) $data['reference'], (string) $data['name'], (string) $data['description'], (string) $data['cancel_url'], (string) $data['success_url'],
@@ -125,6 +130,7 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function monime_handle_checkout_completed(array $payload)
     {
+        \Monime\core\monime_log('info', 'WooCommerce checkout completed webhook received');
         if (!isset($payload['data']['id'])) {
             return new WP_REST_Response(array('error' => 'Missing session ID'), 400);
         }
@@ -160,15 +166,25 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
 
         if (!$order) {
             $this->monime_log('Order not found for session: ' . $session_id, 'error');
+            \Monime\core\monime_log('error', 'WooCommerce order not found for completed webhook', [
+                'session_id' => $session_id,
+            ]);
 
             return new WP_REST_Response(array('error' => 'Order not found'), 404);
         }
 
         $this->monime_log('Processing completed webhook for order #' . $order->get_id());
+        \Monime\core\monime_log('info', 'WooCommerce completed webhook processing order', [
+            'order_id' => $order->get_id(),
+            'session_id' => $session_id,
+        ]);
 
         // Prevent duplicate processing
         if ($order->is_paid() || $order->get_meta('_monime_payment_processed') === 'yes') {
             $this->monime_log('Order #' . $order->get_id() . ' already processed');
+            \Monime\core\monime_log('info', 'WooCommerce completed webhook already processed', [
+                'order_id' => $order->get_id(),
+            ]);
 
             return new WP_REST_Response(array('message' => 'Already processed'), 200);
         }
@@ -189,6 +205,10 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
         $order->save();
 
         $this->monime_log('Payment completed for order #' . $order->get_id());
+        \Monime\core\monime_log('info', 'WooCommerce completed webhook finished', [
+            'order_id' => $order->get_id(),
+            'session_id' => $session_id,
+        ]);
 
         return new WP_REST_Response(array('message' => 'Payment processed'), 200);
     }
@@ -199,6 +219,7 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function monime_handle_checkout_expired(array $payload)
     {
+        \Monime\core\monime_log('info', 'WooCommerce checkout expired webhook received');
         if (!isset($payload['data']['id'])) {
             return new WP_REST_Response(array('error' => 'Missing session ID'), 400);
         }
@@ -212,6 +233,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
         ));
 
         if (empty($orders)) {
+            \Monime\core\monime_log('error', 'WooCommerce order not found for expired webhook', [
+                'session_id' => $session_id,
+            ]);
             return new WP_REST_Response(array('message' => 'Order not found'), 404);
         }
 
@@ -225,6 +249,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
             $order->save();
 
             $this->monime_log('Order #' . $order->get_id() . ' marked as failed');
+            \Monime\core\monime_log('info', 'WooCommerce expired webhook marked order failed', [
+                'order_id' => $order->get_id(),
+            ]);
         }
 
         return new WP_REST_Response(array('message' => 'Expiration processed'), 200);
@@ -236,6 +263,7 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function monime_handle_checkout_cancelled(array $payload)
     {
+        \Monime\core\monime_log('info', 'WooCommerce checkout cancelled webhook received');
         if (!isset($payload['data']['id'])) {
             return new WP_REST_Response(array('error' => 'Missing session ID'), 400);
         }
@@ -249,6 +277,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
         ));
 
         if (empty($orders)) {
+            \Monime\core\monime_log('error', 'WooCommerce order not found for cancelled webhook', [
+                'session_id' => $session_id,
+            ]);
             return new WP_REST_Response(array('message' => 'Order not found'), 404);
         }
 
@@ -262,6 +293,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
             $order->save();
 
             $this->monime_log('Order #' . $order->get_id() . ' cancelled');
+            \Monime\core\monime_log('info', 'WooCommerce cancelled webhook marked order cancelled', [
+                'order_id' => $order->get_id(),
+            ]);
         }
 
         return new WP_REST_Response(array('message' => 'Cancellation processed'), 200);
@@ -273,6 +307,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function handleWebhook(array $payload): void
     {
+        \Monime\core\monime_log('info', 'WooCommerce webhook received', [
+            'adapter_id' => $this->getAdapterId(),
+        ]);
         $event_type = $payload['event']['name'] ?? '';
         if (empty($event_type)) {
             $this->monime_log('Missing webhook event name', 'error');
@@ -282,14 +319,17 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
 
         switch ($event_type) {
             case 'checkout_session.completed':
+                \Monime\core\monime_log('info', 'WooCommerce webhook completed event');
                 $this->monime_handle_checkout_completed($payload);
                 break;
 
             case 'checkout_session.expired':
+                \Monime\core\monime_log('info', 'WooCommerce webhook expired event');
                 $this->monime_handle_checkout_expired($payload);
                 break;
 
             case 'checkout_session.cancelled':
+                \Monime\core\monime_log('info', 'WooCommerce webhook cancelled event');
                 $this->monime_handle_checkout_cancelled($payload);
                 break;
 
@@ -306,6 +346,11 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function is_available()
     {
+        \Monime\core\monime_log('info', 'WooCommerce availability check', [
+            'enabled' => $this->enabled,
+            'has_token' => !empty($this->api_token),
+            'has_space_id' => !empty($this->space_id),
+        ]);
         if ('yes' !== $this->enabled) {
             return false;
         }
@@ -896,6 +941,9 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function process_payment($order_id)
     {
+        \Monime\core\monime_log('info', 'WooCommerce classic checkout started', [
+            'order_id' => $order_id,
+        ]);
         $order = wc_get_order($order_id);
 
         if (!$order) {
@@ -997,6 +1045,10 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
                 $order->get_order_number(),
                 $session['id'] ?? 'unknown',
             ));
+            \Monime\core\monime_log('info', 'WooCommerce classic checkout finished', [
+                'order_id' => $order_id,
+                'session_id' => $session['id'] ?? '',
+            ]);
 
             // Return success with redirect URL
             return array(
@@ -1098,6 +1150,7 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function process_blocks_payment($context, &$payment_result)
     {
+        \Monime\core\monime_log('info', 'WooCommerce blocks checkout started');
         // PaymentContext exposes properties via magic getter.
         $payment_method = isset($context->payment_method) ? $context->payment_method : '';
 
@@ -1223,6 +1276,10 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
             // Set payment result for Blocks checkout
             $payment_result->set_status('success');
             $payment_result->set_redirect_url($session['redirectUrl']);
+            \Monime\core\monime_log('info', 'WooCommerce blocks checkout finished', [
+                'order_id' => $order->get_id(),
+                'session_id' => $session['id'] ?? '',
+            ]);
         } catch (Exception $e) {
             $this->monime_log('Payment processing error: ' . $e->getMessage(), 'error');
             $payment_result->set_status('error');
@@ -1236,6 +1293,10 @@ class WcMonimeGateway extends WC_Payment_Gateway implements MonimePaymentAdapter
      */
     public function process_refund($order_id, $amount = null, $reason = '')
     {
+        \Monime\core\monime_log('info', 'WooCommerce refund requested', [
+            'order_id' => $order_id,
+            'amount' => $amount,
+        ]);
         $order = wc_get_order($order_id);
 
         if (!$order) {

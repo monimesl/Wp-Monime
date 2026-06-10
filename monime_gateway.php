@@ -30,6 +30,7 @@ define('MONIME_VERSION', '1.0.1');
 
 // Load core files once (early)
 $core_files = [
+    'src/Monime/core/logger.php',
     'src/Monime/core/Env.php',
     'src/Monime/core/get_urls.php',
     'src/Monime/core/dto.php',
@@ -52,6 +53,10 @@ foreach ($core_files as $file) {
 }
 
 ;
+
+\Monime\core\monime_log('info', 'Plugin bootstrap loaded', [
+    'version' => MONIME_VERSION,
+]);
 
 /*
  |--------------------------------------------------------------------------
@@ -97,8 +102,11 @@ function monime_gateway_plugin_action_links($links)
  |--------------------------------------------------------------------------
  */
 add_action('plugins_loaded', function () {
+    \Monime\core\monime_log('info', 'plugins_loaded bootstrap started');
+
     // GiveWP Integration
     if (class_exists(\Give\Framework\PaymentGateways\PaymentGateway::class)) {
+        \Monime\core\monime_log('info', 'GiveWP detected, loading integration');
         $give_files = [
             'src/adaptors/givewp/GiveMonimeGateway.php',
             'src/adaptors/givewp/GivewpAdapter.php',
@@ -114,10 +122,13 @@ add_action('plugins_loaded', function () {
         }
 
         GivewpAdapter::boot();
+    } else {
+        \Monime\core\monime_log('info', 'GiveWP not detected, skipping integration');
     }
 
     // WooCommerce Integration
     if (class_exists('WooCommerce') || function_exists('WC')) {
+        \Monime\core\monime_log('info', 'WooCommerce detected, loading integration');
         $wc_files = [
             'src/adaptors/WC/WcMonimeGateway.php',
             'src/adaptors/WC/WC_Monime_Blocks_Support.php',
@@ -150,14 +161,20 @@ add_action('plugins_loaded', function () {
             });
             WcAdapter::boot();
         }
+    } else {
+        \Monime\core\monime_log('info', 'WooCommerce not detected, skipping integration');
     }
 
     // Shared Services
     if (class_exists(AdapterService::class)) {
+        \Monime\core\monime_log('info', 'Booting shared adapter services');
         AdapterService::boot();
     }
 
     if (class_exists(Webhook::class)) {
+        \Monime\core\monime_log('info', 'Initializing webhook endpoint');
         Webhook::init();
     }
+
+    \Monime\core\monime_log('info', 'plugins_loaded bootstrap finished');
 });
