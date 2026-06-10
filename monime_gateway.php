@@ -19,6 +19,8 @@ use Adaptors\Givewp\GivewpAdapter;
 use Monime\core\Webhook;
 use Monime\services\AdapterService;
 
+use function Monime\core\monime_log;
+
 if (!defined('ABSPATH')) {
     exit(); // Exit if accessed directly.
 }
@@ -53,10 +55,6 @@ foreach ($core_files as $file) {
 }
 
 ;
-
-\Monime\core\monime_log('info', 'Plugin bootstrap loaded', [
-    'version' => MONIME_VERSION,
-]);
 
 /*
  |--------------------------------------------------------------------------
@@ -162,19 +160,17 @@ add_action('plugins_loaded', function () {
             WcAdapter::boot();
         }
     } else {
-        \Monime\core\monime_log('info', 'WooCommerce not detected, skipping integration');
+        monime_log('info', 'WooCommerce not detected, skipping integration');
     }
 
     // Shared Services
     if (class_exists(AdapterService::class)) {
-        \Monime\core\monime_log('info', 'Booting shared adapter services');
+        monime_log('info', 'Booting shared adapter services');
         AdapterService::boot();
     }
 
     if (class_exists(Webhook::class)) {
-        \Monime\core\monime_log('info', 'Initializing webhook endpoint');
+        monime_log('info', 'Initializing webhook endpoint');
         Webhook::init();
     }
-
-    \Monime\core\monime_log('info', 'plugins_loaded bootstrap finished');
 });
